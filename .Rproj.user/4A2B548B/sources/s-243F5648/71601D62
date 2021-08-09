@@ -1,0 +1,26 @@
+{
+    "id": "71601D62",
+    "path": "~/nser/R/NSEUpdated.R",
+    "project_path": "R/NSEUpdated.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1627311307883.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "77,9",
+        "scrollLine": "64"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1628507486,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1628507486074,
+    "read_only": false,
+    "read_only_alternatives": []
+}

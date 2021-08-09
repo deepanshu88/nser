@@ -1,0 +1,16 @@
+Package: nser
+Type: Package
+Title: Fetch Stocks Data from NSE via R
+Version: 0.1.0
+Author: Deepanshu Bhalla
+Maintainer: Deepanshu Bhalla <deepanshu88.us@gmail.com>
+Description: Fetch Stocks Data from NSE via R 
+License: ListenData
+Encoding: UTF-8
+LazyData: true
+Import: dplyr, httr, jsonlite
+Depends: R (>= 3.4.3)
+VignetteBuilder: knitr
+RoxygenNote: 7.1.1
+Roxygen: list(markdown = TRUE)
+Suggests: rmarkdown

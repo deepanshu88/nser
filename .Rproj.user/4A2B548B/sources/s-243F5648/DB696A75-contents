@@ -1,0 +1,276 @@
+#' Manual Bucketing of Numeric Variable
+#'
+#' This function recodes a numeric variable (categorizing numeric variable into groups). It performs recoding manually. You have to specify intervals.
+#'
+#' @param df Data frame
+#' @param column Numeric variable to recode
+#' @param interval Specific Intervals.
+#' @param suffix Text added at end of original variable name for naming new colums.
+#'
+#' @return A data frame with column recoded.
+#' @export
+#' @seealso [BktngQuantile()]
+#' @author Deepanshu Bhalla
+#' @examples
+#' df_test <- BktngManual(iris, 'Sepal.Length', interval = c(4,6,8,Inf))
+
+BktngManual <-
+  function(df,
+           column,
+           interval = NULL,
+           suffix = 'Group') {
+
+    column2 <- paste(column, suffix, sep = "")
+
+    # Check input if list, data.frame or tibble
+    if(!is.data.frame.tibble(df)) {
+      stop("Argument `Dataframe` is neither data.frame nor tibble")
+    }
+
+    # dplyr / magrittr is required for %>%
+    if (!(c("dplyr") %in% loadedNamespaces())) {
+      suppressPackageStartupMessages(require(dplyr, quietly = T))
+    }
+
+    # Check column exists
+    is.column.exist(df, column)
+
+
+    # Check Variable class
+    if (!is.numeric(df[[column]])) {
+      stop("Variable is not numeric")
+    }
+
+    if(min(df[[column]], na.rm = T) < interval[1]) {
+      cli::cli_alert_danger("Lowest limit of interval is higher than the minimum value of this column")
+    }
+
+    if(max(df[[column]], na.rm = T) > interval[length(interval)]) {
+      cli::cli_alert_danger("Highest limit of interval is lower than the maximum value of this column")
+    }
+
+
+    # Bucketing
+    k <- cut(df[[column]], breaks = interval, include.lowest = TRUE, dig.lab = 14)
+
+    # Mapping
+    k1 <- levels(k)
+    k2 <- paste0("G", 1:length(k1),":",trimws(k1))
+    mapping <- data.frame(k1 , k2)
+
+    # Creating Bucketed Column
+      df <-
+        df %>% mutate(!!column2 := k) %>%
+        mutate(across(!!column2, ~ coalesce(tibble::deframe(mapping)[.], .)))
+
+      message(column2, " column has been created")
+
+    return(df)
+
+}
+
+#' Bucketing of Numeric Variable based on Quantiles
+#'
+#' This function recodes a numeric variable (categorizing numeric variable into groups). It performs recoding based on quantiles.
+#'
+#' @param df Data frame
+#' @param column Numeric variable to recode
+#' @param NBins Number of Bins.
+#' @param suffix Text added at end of original variable name for naming new colums.
+#'
+#' @return A data frame with column recoded.
+#' @export
+#' @seealso [BktngManual()]
+#' @author Deepanshu Bhalla
+#' @examples
+#' df_test <- BktngQuantile(iris, 'Sepal.Length', NBins = 4)
+
+BktngQuantile <-
+  function(df,
+           column,
+           NBins = 5,
+           suffix = 'Group') {
+
+    column2 <- paste(column, suffix, sep = "")
+
+    # Check input if list, data.frame or tibble
+    if(!is.data.frame.tibble(df)) {
+      stop("Argument `Dataframe` is neither data.frame nor tibble")
+    }
+
+    # dplyr / magrittr is required for %>%
+    if (!(c("dplyr") %in% loadedNamespaces())) {
+      suppressPackageStartupMessages(require(dplyr, quietly = T))
+    }
+
+    # Check column exists
+    is.column.exist(df, column)
+
+    # Check Variable class
+    if (!is.numeric(df[[column]])) {
+      stop("Variable is not numeric")
+    }
+
+    # Quintile
+    NBins <- NBins
+    interval <- unique(quantile(df[[column]], probs = seq.int(0,1,(1/NBins)), na.rm = T))
+
+    # Bucketing
+    k <- cut(df[[column]], breaks = interval, include.lowest = TRUE, dig.lab = 14)
+
+    # Mapping
+    k1 <- levels(k)
+    k2 <- paste0("G", 1:length(k1),":",trimws(k1))
+    mapping <- data.frame(k1 , k2)
+
+    # Creating Bucketed Column
+    df <-
+      df %>% mutate(!!column2 := k) %>%
+      mutate(across(!!column2, ~ coalesce(tibble::deframe(mapping)[.], .)))
+
+    message(column2, " column has been created")
+
+    return(df)
+
+  }
+
+#' Bucketing of Numeric Variable based on fixed bins
+#'
+#' This function recodes a numeric variable (categorizing numeric variable into groups). It performs recoding based on fixed bins.
+#'
+#' @param df Data frame
+#' @param column Numeric variable to recode
+#' @param NBins Number of Bins.
+#' @param suffix Text added at end of original variable name for naming new colums.
+#'
+#' @return A data frame with column recoded.
+#' @export
+#' @seealso [BktngManual()]
+#' @author Deepanshu Bhalla
+#' @examples
+#' df_test <- BktngFixedBins(iris, 'Sepal.Length', NBins = 4)
+
+BktngFixedBins <-
+  function(df,
+           column,
+           NBins = 5,
+           suffix = 'Group') {
+
+    column2 <- paste(column, suffix, sep = "")
+
+    # Check input if list, data.frame or tibble
+    if(!is.data.frame.tibble(df)) {
+      stop("Argument `Dataframe` is neither data.frame nor tibble")
+    }
+
+    # dplyr / magrittr is required for %>%
+    if (!(c("dplyr") %in% loadedNamespaces())) {
+      suppressPackageStartupMessages(require(dplyr, quietly = T))
+    }
+
+    # Check column exists
+    is.column.exist(df, column)
+
+    # Check Variable class
+    if (!is.numeric(df[[column]])) {
+      stop("Variable is not numeric")
+    }
+
+    # Equal Sized Group
+    # df2 <- data.frame(f = df[[column]], g = ntile_(df[[column]], NBins))
+
+    minValue <- min(df[[column]], na.rm = T)
+    maxValue <- max(df[[column]], na.rm = T)
+    rangeValue <- (maxValue - minValue) / NBins
+
+    interval <- seq.int(minValue, maxValue, rangeValue)
+
+    # Bucketing
+    k <- cut(df[[column]], breaks = interval, include.lowest = T, dig.lab = 14)
+
+    # Mapping
+    k1 <- levels(k)
+    k2 <- paste0("G", 1:length(k1),":",trimws(k1))
+    mapping <- data.frame(k1 , k2)
+
+    # Creating Bucketed Column
+    df <-
+      df %>% mutate(!!column2 := k) %>%
+      mutate(across(!!column2, ~ coalesce(tibble::deframe(mapping)[.], .)))
+
+    message(column2, " column has been created")
+
+    return(df)
+
+  }
+
+
+#' Bucketing of Numeric Variable based on IQR
+#'
+#' This function recodes a numeric variable (categorizing numeric variable into groups). It performs recoding based on Box Plot method.
+#'
+#' @param df Data frame
+#' @param column Numeric variable to recode
+#' @param suffix Text added at end of original variable name for naming new colums.
+#'
+#' @return A data frame with column recoded.
+#' @export
+#' @seealso [BktngManual()]
+#' @author Deepanshu Bhalla
+#' @examples
+#' df_test <- BktngIQR(iris, 'Sepal.Length')
+
+
+BktngIQR <-
+  function(df,
+           column,
+           suffix = 'Group') {
+
+    column2 <- paste(column, suffix, sep = "")
+
+    # Check input if list, data.frame or tibble
+    if(!is.data.frame.tibble(df)) {
+      stop("Argument `Dataframe` is neither data.frame nor tibble")
+    }
+
+    # dplyr / magrittr is required for %>%
+    if (!(c("dplyr") %in% loadedNamespaces())) {
+      suppressPackageStartupMessages(require(dplyr, quietly = T))
+    }
+
+    # Check column exists
+    is.column.exist(df, column)
+
+
+    # Check Variable class
+    if (!is.numeric(df[[column]])) {
+      stop("Variable is not numeric")
+    }
+
+    # Groups
+    interval <- unique(quantile(df[[column]], probs = c(0.25,0.75), na.rm = T))
+
+    minValue <- min(df[[column]], na.rm = T)
+    maxValue <- max(df[[column]], na.rm = T)
+    interval <- unique(sort(c(minValue, interval[[1]], interval[[2]], maxValue)))
+
+    # Bucketing
+    k <- cut(df[[column]], breaks = interval,
+             include.lowest = T, dig.lab = 14)
+
+    # Mapping
+    k1 <- levels(k)
+    k2 <- paste0("G", 1:length(k1),":",trimws(k1))
+    mapping <- data.frame(k1 , k2)
+
+    # Creating Bucketed Column
+    df <-
+      df %>% mutate(!!column2 := k) %>%
+      mutate(across(!!column2, ~ coalesce(tibble::deframe(mapping)[.], .)))
+
+    message(column2, " column has been created")
+
+    return(df)
+
+  }
+
